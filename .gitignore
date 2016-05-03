@@ -1,0 +1,7 @@
+" Vim swap files.
+.swp
+
+" Build files.
+lex.yy.c
+sipl
+y.tab.c
