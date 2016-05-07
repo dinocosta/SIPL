@@ -2,31 +2,26 @@
   #define _GNU_SOURCE
   #include <string.h>
   #include <stdio.h>
+  int yylex();
+  int yyerror(char *);
 %}
 
 %union{
-  char *s;
+  char * s;
 }
 
-%token <s> TAG ATT TXT VATT
-%type <s> elemento corpo atts abreele fechaele
+%token Int START STOP
+%token <s> VAR
+%type <s> intvars ints
 
 %%
-xml: elemento                           {printf("\\begin{document}\n" "%s\n" "\\end{document}\n", $1);}
+siplp: ints START STOP              { printf("START\nSTOP"); }
+     ;
+ints: Int intvars ';'               { }
     ;
-elemento: abreele corpo fechaele        {asprintf(&$$, "%s %s %s", $1, $2, $3);}
-        ;
-corpo: corpo elemento                   {asprintf(&$$, "%s %s", $1, $2);}
-    | corpo TXT                         {asprintf(&$$, "%s %s", $1, $2);}
-    |                                   {$$="";}
-    ;
-abreele: '<' TAG atts '>'               {asprintf(&$$, "\\begin{%s}%s", $2, $3);}
-        ;
-atts: atts ATT '=' VATT                 {asprintf(&$$, "%s \\%s{%s}", $1, $2, $4);}
-    |                                   {$$="";}
-    ;
-fechaele: '<' '/' TAG '>'               {asprintf(&$$, "\\end{%s}", $3);};
-        ;
+intvars: VAR ',' intvars            { printf("PUSHI 0\n"); }
+       | VAR                        { printf("PUSHI 0\n"); }
+       ;
 %%
 
 #include "lex.yy.c"

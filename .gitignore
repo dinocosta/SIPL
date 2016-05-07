@@ -1,5 +1,5 @@
 " Vim swap files.
-.swp
+*.swp
 
 " Build files.
 lex.yy.c
