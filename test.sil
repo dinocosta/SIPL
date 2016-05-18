@@ -1,7 +1,3 @@
-Int a,b,c;
-START
-WR(b);
-RD(a);
-WR(a);
-WR("Olá");
+Int a=10,b,c;
+RUN
 STOP

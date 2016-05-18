@@ -2,8 +2,10 @@
   #define _GNU_SOURCE
   #include <string.h>
   #include <stdio.h>
+  #import <glib.h>
   int yylex();
   int yyerror(char *);
+  void add_var(char *);
 %}
 
 %union{
@@ -11,72 +13,28 @@
   int n;
 }
 
-%token Int Ints START STOP RD WR IF ELSE ELSEIF WHILE AND OR
+%token Int RUN STOP
+%token <s> VAR
 %token <n> NUM
-%token <s> VAR STRING
-%type <s> intvars ints insts data
+%type <s> intvars ints
 
 %%
-siplp: ints arrays START insts STOP               { printf("start\n%sstop", $4); }
+siplp: ints RUN STOP                { printf("%sstart\nstop", $1); }
      ;
-ints: Int intvars ';'                             { }
+ints: Int intvars ';'               { $$ = $2; }
     ;
-intvars: VAR ',' intvars                          { printf("pushi 0\n"); }
-       | VAR                                      { printf("pushi 0\n"); }
+intvars: VAR ',' intvars            { asprintf(&$$, "pushi 0\n%s", $3); add_var($1); }
+       | VAR '=' NUM ',' intvars    { asprintf(&$$, "pushi %d\n%s", $3, $5); add_var($1); }
+       | VAR '=' NUM                { asprintf(&$$, "pushi %d\n", $3); add_var($1); }
+       | VAR                        { asprintf(&$$, "pushi 0\n"); add_var($1); }
        ;
-arrays: Ints arrayvars ';'                        { }
-      ;
-data: VAR
-    | VAR '[' NUM ']'
-    | VAR '[' NUM ']' '[' NUM ']'
-arrayvars: VAR '[' NUM ']' ',' arrayvars          { }
-         | VAR '[' NUM ']' '[' NUM ']' arrayvars  { }
-         | VAR '[' NUM ']' '[' NUM ']'            { }
-         | VAR '[' NUM ']'                        { }
-insts: RD '(' data ')' ';' insts                  { printf("READ(%s);\n", $3); }
-     | WR '(' data ')' ';' insts                  { printf("WRITE(%s);\n", $3); }
-     | WR '(''"' STRING '"' ')' ';' insts         { printf("WRITE(%s);\n)", $4); }
-     | data "=" expr ';' insts                    { printf("Atribuuição\n"); }
-     | while insts                                { }
-     | if insts                                   { }
-     |                                            { $$ = ""; }
-     ;
-expr: parcel
-    | expr '+' parcel
-    | expr '-' parcel
-    ;
-parcel: parcel '*' factor
-      | parcel '/' factor
-      | factor
-      ;
-factor: NUM
-      | VAR
-      | '(' expr ')'
-      ;
-while: WHILE '(' cond ')' '{' insts '}'
-     ;
-if: IF '(' cond ')' '{' insts '}' else
-  | IF '(' cond ')' '{' insts '}' elseif
-  | IF '(' cond ')' '{' insts '}'
-  ;
-else: ELSE '{' insts '}'
-    ;
-elseif: ELSEIF '(' cond ')' '{' insts '}' elseif
-      | ELSEIF '(' cond ')' '{' insts '}' else
-      | ELSEIF '(' cond ')' '{' insts '}'
-      ;
-cond: cond AND cond
-    | cond OR cond
-    | expr ">=" expr
-    | expr ">" expr
-    | expr "<=" expr
-    | expr "<" expr
-    | expr "==" expr
-    | expr "!=" expr
-    ;
 %%
 
 #include "lex.yy.c"
+
+// Hashtable used to map variable names to addresses.
+GHashTable * addresses;
+int pointer;
 
 int yyerror (char *s) {
   fprintf(stderr, "%s (%d)\n", s, yylineno);
@@ -84,6 +42,24 @@ int yyerror (char *s) {
 }
 
 int main() {
+  // Initialize variables needed to store the variable addresses.
+  addresses = g_hash_table_new(g_str_hash, g_str_equal);
+  pointer   = 0;
+
   yyparse();
   return 0;
+}
+
+void add_var(char * var) {
+
+  // Check if variable does not exist.
+  int * addr = (int *) g_hash_table_lookup(addresses, var);
+  if (addr == NULL) {
+    addr = (int *) malloc(sizeof(int)); *addr = pointer;
+    g_hash_table_insert(addresses, var, addr);
+    pointer++;
+  } else {
+    // Stop execution if variable name is already in use.
+    yyerror("Variável já em utilização.");
+  }
 }
