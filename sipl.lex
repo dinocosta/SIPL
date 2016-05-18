@@ -14,5 +14,10 @@
 <INSTRUCTIONS>STOP    { BEGIN INITIAL; return STOP; }
 <INSTRUCTIONS>[ \t\n] { }
 
+<INSTRUCTIONS>wr      { BEGIN WRITE; return wr; }
+<WRITE>[()]           { return yytext[0]; }
+<WRITE>[A-Za-z]+      { yylval.s = strdup(yytext); return VAR; }
+<WRITE>;              { BEGIN INSTRUCTIONS; return yytext[0]; }
+
 <*>.|\n               { }
 %%

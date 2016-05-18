@@ -6,6 +6,7 @@
   int yylex();
   int yyerror(char *);
   void add_var(char *);
+  int get_addr(char *);
 %}
 
 %union{
@@ -13,13 +14,13 @@
   int n;
 }
 
-%token Int RUN STOP
+%token Int RUN STOP wr
 %token <s> VAR
 %token <n> NUM
-%type <s> intvars ints
+%type <s> intvars ints insts
 
 %%
-siplp: ints RUN STOP                { printf("%sstart\nstop\n", $1); }
+siplp: ints RUN insts STOP          { printf("%sstart\n%sstop\n", $1, $3); }
      ;
 ints: Int intvars ';'               { $$ = $2; }
     ;
@@ -28,6 +29,9 @@ intvars: intvars ',' VAR            { asprintf(&$$, "%spushi 0\n", $1); add_var(
        | VAR '=' NUM                { asprintf(&$$, "pushi %d\n", $3); add_var($1); }
        | VAR                        { asprintf(&$$, "pushi 0\n"); add_var($1); }
        ;
+insts: wr '(' VAR ')' ';' insts     { asprintf(&$$, "pushg %d\nwritei\n%s", get_addr($3), $6); }
+     |                              { $$ = ""; }
+     ;
 %%
 
 #include "lex.yy.c"
@@ -61,6 +65,7 @@ int main() {
   return 0;
 }
 
+/*  Add a variable to the hashtable, saving its global address. */
 void add_var(char * var) {
   // Check if variable does not exist.
   int * addr = (int *) g_hash_table_lookup(addresses, var);
@@ -72,4 +77,16 @@ void add_var(char * var) {
     // Stop execution if variable name is already in use.
     yyerror("Variável já em utilização.");
   }
+}
+
+/*  Get the global address of a given variable name. */
+int get_addr(char * var) {
+  int * addr = (int *) g_hash_table_lookup(addresses, var);
+  if (addr == NULL) { // Variable does not exist.
+    yyerror("A variável não existe.");
+  } else {
+    return *addr;
+  }
+
+  return 0;
 }
