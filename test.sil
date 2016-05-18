@@ -3,4 +3,5 @@ START
 WR(b);
 RD(a);
 WR(a);
+WR("Olá");
 STOP

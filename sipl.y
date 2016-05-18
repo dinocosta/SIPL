@@ -8,24 +8,72 @@
 
 %union{
   char * s;
+  int n;
 }
 
-%token Int START STOP RD WR
-%token <s> VAR
-%type <s> intvars ints insts
+%token Int Ints START STOP RD WR IF ELSE ELSEIF WHILE AND OR
+%token <n> NUM
+%token <s> VAR STRING
+%type <s> intvars ints insts data
 
 %%
-siplp: ints START insts STOP        { printf("START\n%sSTOP", $3); }
+siplp: ints arrays START insts STOP               { printf("start\n%sstop", $4); }
      ;
-ints: Int intvars ';'               { }
+ints: Int intvars ';'                             { }
     ;
-intvars: VAR ',' intvars            { printf("PUSHI 0\n"); }
-       | VAR                        { printf("PUSHI 0\n"); }
+intvars: VAR ',' intvars                          { printf("pushi 0\n"); }
+       | VAR                                      { printf("pushi 0\n"); }
        ;
-insts: RD '(' VAR ')' ';' insts     { printf("READ(%s);\n", $3); }
-     | WR '(' VAR ')' ';' insts     { printf("WRITE(%s);\n", $3); }
-     |                              { $$ = ""; }
+arrays: Ints arrayvars ';'                        { }
+      ;
+data: VAR
+    | VAR '[' NUM ']'
+    | VAR '[' NUM ']' '[' NUM ']'
+arrayvars: VAR '[' NUM ']' ',' arrayvars          { }
+         | VAR '[' NUM ']' '[' NUM ']' arrayvars  { }
+         | VAR '[' NUM ']' '[' NUM ']'            { }
+         | VAR '[' NUM ']'                        { }
+insts: RD '(' data ')' ';' insts                  { printf("READ(%s);\n", $3); }
+     | WR '(' data ')' ';' insts                  { printf("WRITE(%s);\n", $3); }
+     | WR '(''"' STRING '"' ')' ';' insts         { printf("WRITE(%s);\n)", $4); }
+     | data "=" expr ';' insts                    { printf("Atribuuição\n"); }
+     | while insts                                { }
+     | if insts                                   { }
+     |                                            { $$ = ""; }
      ;
+expr: parcel
+    | expr '+' parcel
+    | expr '-' parcel
+    ;
+parcel: parcel '*' factor
+      | parcel '/' factor
+      | factor
+      ;
+factor: NUM
+      | VAR
+      | '(' expr ')'
+      ;
+while: WHILE '(' cond ')' '{' insts '}'
+     ;
+if: IF '(' cond ')' '{' insts '}' else
+  | IF '(' cond ')' '{' insts '}' elseif
+  | IF '(' cond ')' '{' insts '}'
+  ;
+else: ELSE '{' insts '}'
+    ;
+elseif: ELSEIF '(' cond ')' '{' insts '}' elseif
+      | ELSEIF '(' cond ')' '{' insts '}' else
+      | ELSEIF '(' cond ')' '{' insts '}'
+      ;
+cond: cond AND cond
+    | cond OR cond
+    | expr ">=" expr
+    | expr ">" expr
+    | expr "<=" expr
+    | expr "<" expr
+    | expr "==" expr
+    | expr "!=" expr
+    ;
 %%
 
 #include "lex.yy.c"
