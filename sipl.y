@@ -14,8 +14,8 @@
   int n;
 }
 
-%token Int RUN STOP wr
-%token <s> VAR
+%token Int RUN STOP wr rd
+%token <s> VAR STRING
 %token <n> NUM
 %type <s> intvars ints insts
 
@@ -29,7 +29,13 @@ intvars: intvars ',' VAR            { asprintf(&$$, "%spushi 0\n", $1); add_var(
        | VAR '=' NUM                { asprintf(&$$, "pushi %d\n", $3); add_var($1); }
        | VAR                        { asprintf(&$$, "pushi 0\n"); add_var($1); }
        ;
-insts: wr '(' VAR ')' ';' insts     { asprintf(&$$, "pushg %d\nwritei\n%s", get_addr($3), $6); }
+insts: wr '(' VAR ')'';' insts      { asprintf(&$$, "pushg %d\nwritei\n%s", get_addr($3), $6); }
+     | wr '(''"' STRING '"'')'';' insts
+     {
+      asprintf(&$$, "pushs \"%s\"\nwrites\n%s", $4, $8);
+     }
+     | rd '(' VAR ')' ';' insts     { asprintf(&$$, "read\natoi\nstoreg %d\n%s", get_addr($3),
+                                      $6); }
      |                              { $$ = ""; }
      ;
 %%
