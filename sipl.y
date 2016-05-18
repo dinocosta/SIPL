@@ -19,12 +19,12 @@
 %type <s> intvars ints
 
 %%
-siplp: ints RUN STOP                { printf("%sstart\nstop", $1); }
+siplp: ints RUN STOP                { printf("%sstart\nstop\n", $1); }
      ;
 ints: Int intvars ';'               { $$ = $2; }
     ;
-intvars: VAR ',' intvars            { asprintf(&$$, "pushi 0\n%s", $3); add_var($1); }
-       | VAR '=' NUM ',' intvars    { asprintf(&$$, "pushi %d\n%s", $3, $5); add_var($1); }
+intvars: intvars ',' VAR            { asprintf(&$$, "%spushi 0\n", $1); add_var($3); }
+       | intvars ',' VAR '=' NUM    { asprintf(&$$, "%spushi %d\n", $1, $5); add_var($3); }
        | VAR '=' NUM                { asprintf(&$$, "pushi %d\n", $3); add_var($1); }
        | VAR                        { asprintf(&$$, "pushi 0\n"); add_var($1); }
        ;
@@ -47,11 +47,21 @@ int main() {
   pointer   = 0;
 
   yyparse();
+
+  // Run through all the variables and print their addresses.
+  /*
+  GList * keys = g_hash_table_get_keys(addresses);
+  while (keys != NULL) {
+    int * addr = (int *) g_hash_table_lookup(addresses, keys->data);
+    printf("%s - %d\n", keys->data, *addr);
+    keys = keys->next;
+  }
+  */
+
   return 0;
 }
 
 void add_var(char * var) {
-
   // Check if variable does not exist.
   int * addr = (int *) g_hash_table_lookup(addresses, var);
   if (addr == NULL) {
