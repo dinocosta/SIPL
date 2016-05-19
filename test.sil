@@ -1,12 +1,4 @@
 Int a=1,b=2,c=3;
 RUN
-wr("O valor de a e: ");
-wr(a);
-wr("O valor de c e: ");
-wr(c);
-wr("O valor de b e: ");
-wr(b);
-rd(c);
-wr("O novo valor de c e: ");
-wr(c);
+(5 != 5);
 STOP

@@ -1,6 +1,6 @@
 %option noyywrap
 %option yylineno
-%x INTS INSTRUCTIONS READ WRITE ARRAYS INSTR
+%x INTS INSTRUCTIONS READ WRITE ARRAYS INSTR EXPR COND
 
 %%
 <INITIAL>Int          { BEGIN INTS; return Int; }
@@ -26,6 +26,19 @@
 <READ>[()]            { return yytext[0]; }
 <READ>[A-Za-z]+       { yylval.s = strdup(yytext); return VAR; }
 <READ>;               { BEGIN INSTRUCTIONS; return yytext[0]; }
+
+<INSTRUCTIONS>[A-Za-z]+ { BEGIN EXPR; yylval.s = strdup(yytext); return VAR; }
+<EXPR>[-+*/%()=]       { return yytext[0]; }
+<EXPR>[0-9]+            { yylval.n = atof(yytext); return NUM; }
+<EXPR>[A-Za-z]+         { yylval.s = strdup(yytext); return VAR; }
+<EXPR>;                 { BEGIN INSTRUCTIONS; return yytext[0]; }
+
+<INSTRUCTIONS>[(]       { BEGIN COND; return yytext[0]; }
+<COND>[-+*/()=><!]      { return yytext[0]; }
+<COND>[0-9]+            { yylval.n = atof(yytext); return NUM; }
+<COND>[A-Za-z]+         { yylval.s = strdup(yytext); return VAR; }
+<COND>;                 { BEGIN INSTRUCTIONS; return yytext[0]; }
+<COND>[ \t\n]*          { }
 
 <*>.|\n               { }
 %%

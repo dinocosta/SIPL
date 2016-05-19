@@ -17,7 +17,7 @@
 %token Int RUN STOP wr rd
 %token <s> VAR STRING
 %token <n> NUM
-%type <s> intvars ints insts
+%type <s> intvars ints insts expr parcel factor cond
 
 %%
 siplp: ints RUN insts STOP          { printf("%sstart\n%sstop\n", $1, $3); }
@@ -36,8 +36,30 @@ insts: wr '(' VAR ')'';' insts      { asprintf(&$$, "pushg %d\nwritei\n%s", get_
      }
      | rd '(' VAR ')' ';' insts     { asprintf(&$$, "read\natoi\nstoreg %d\n%s", get_addr($3),
                                       $6); }
+     | VAR '=' expr ';' insts       { asprintf(&$$, "%sstoreg %d\n%s", $3, get_addr($1), $5); }
+     | '(' cond ')' ';' insts       { asprintf(&$$, "%s%s", $2, $5); }
      |                              { $$ = ""; }
      ;
+expr: parcel                { $$ = $1; }
+    | expr '+' parcel       { asprintf(&$$, "%s%sadd\n", $1, $3); }
+    | expr '-' parcel       { asprintf(&$$, "%s%ssub\n", $1, $3); }
+    ;
+parcel: parcel '*' factor   { asprintf(&$$, "%s%smul\n", $1, $3); }
+      | parcel '/' factor   { asprintf(&$$, "%s%sdiv\n", $1, $3); }
+      | parcel '%' factor   { asprintf(&$$, "%s%smod\n", $1, $3); }
+      | factor              { $$ = $1; }
+      ;
+factor: NUM                 { asprintf(&$$, "pushi %d\n", $1); }
+      | VAR                 { asprintf(&$$, "pushg %d\n", get_addr($1)); }
+      | '(' expr ')'        { $$ = $2; }
+      ;
+cond: expr '>' expr         { asprintf(&$$, "%s%ssup\n", $1, $3); }
+    | expr '<' expr         { asprintf(&$$, "%s%sinf\n", $1, $3); }
+    | expr '>''=' expr      { asprintf(&$$, "%s%ssupeq\n", $1, $4); }
+    | expr '<''=' expr      { asprintf(&$$, "%s%sinfeq\n", $1, $4); }
+    | expr '!''=' expr      { asprintf(&$$, "%s%sequal\npushi 1\ninf\n", $1, $4); }
+    | expr '=''=' expr      { asprintf(&$$, "%s%sequal\n", $1, $4); }
+    ;
 %%
 
 #include "lex.yy.c"
