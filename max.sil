@@ -1,0 +1,7 @@
+Int a,b;
+RUN
+  rd(a);
+  rd(b);
+  ?(a >= b) { wr(a); }
+  ?(b > a) { wr(b); }
+STOP

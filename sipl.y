@@ -7,6 +7,7 @@
   int yyerror(char *);
   void add_var(char *);
   int get_addr(char *);
+  char * if_clause(char *, char *, char *);
   int block;
 %}
 
@@ -25,44 +26,41 @@ siplp: ints RUN insts STOP          { printf("%sstart\n%sstop\n", $1, $3); }
      ;
 ints: Int intvars ';'               { $$ = $2; }
     ;
-intvars: intvars ',' VAR            { asprintf(&$$, "%spushi 0\n", $1); add_var($3); }
-       | intvars ',' VAR '=' NUM    { asprintf(&$$, "%spushi %d\n", $1, $5); add_var($3); }
-       | VAR '=' NUM                { asprintf(&$$, "pushi %d\n", $3); add_var($1); }
-       | VAR                        { asprintf(&$$, "pushi 0\n"); add_var($1); }
+intvars: intvars ',' VAR            { asprintf(&$$, "%s\tpushi 0\n", $1); add_var($3); }
+       | intvars ',' VAR '=' NUM    { asprintf(&$$, "%s\tpushi %d\n", $1, $5); add_var($3); }
+       | VAR '=' NUM                { asprintf(&$$, "\tpushi %d\n", $3); add_var($1); }
+       | VAR                        { asprintf(&$$, "\tpushi 0\n"); add_var($1); }
        ;
-insts: wr '(' VAR ')'';' insts      { asprintf(&$$, "pushg %d\nwritei\n%s", get_addr($3), $6); }
+insts: wr '(' VAR ')'';' insts      { asprintf(&$$, "\tpushg %d\n\twritei\n%s", get_addr($3), $6); }
      | wr '(''"' STRING '"'')'';' insts
      {
       asprintf(&$$, "pushs \"%s\"\nwrites\n%s", $4, $8);
      }
-     | rd '(' VAR ')' ';' insts     { asprintf(&$$, "read\natoi\nstoreg %d\n%s", get_addr($3),
+     | rd '(' VAR ')' ';' insts     { asprintf(&$$, "\tread\n\tatoi\n\tstoreg %d\n%s", get_addr($3),
                                       $6); }
-     | VAR '=' expr ';' insts       { asprintf(&$$, "%sstoreg %d\n%s", $3, get_addr($1), $5); }
-     | '?' '(' cond ')' '{' insts '}' insts  {
-     asprintf(&$$, "%sjz bloco%d\nbloco%d: %sbloco%d: %s", $3, block+1, block, $6, block+1, $8);
-     block += 2;
-     }
+     | VAR '=' expr ';' insts       { asprintf(&$$, "%s\tstoreg %d\n%s", $3, get_addr($1), $5); }
+     | '?' '(' cond ')' '{' insts '}' insts  { asprintf(&$$, "%s", if_clause($3,$6,$8)); }
      |                              { $$ = ""; }
      ;
 expr: parcel                { $$ = $1; }
-    | expr '+' parcel       { asprintf(&$$, "%s%sadd\n", $1, $3); }
-    | expr '-' parcel       { asprintf(&$$, "%s%ssub\n", $1, $3); }
+    | expr '+' parcel       { asprintf(&$$, "%s%s\tadd\n", $1, $3); }
+    | expr '-' parcel       { asprintf(&$$, "%s%s\tsub\n", $1, $3); }
     ;
-parcel: parcel '*' factor   { asprintf(&$$, "%s%smul\n", $1, $3); }
-      | parcel '/' factor   { asprintf(&$$, "%s%sdiv\n", $1, $3); }
-      | parcel '%' factor   { asprintf(&$$, "%s%smod\n", $1, $3); }
+parcel: parcel '*' factor   { asprintf(&$$, "%s%s\tmul\n", $1, $3); }
+      | parcel '/' factor   { asprintf(&$$, "%s%s\tdiv\n", $1, $3); }
+      | parcel '%' factor   { asprintf(&$$, "%s%s\tmod\n", $1, $3); }
       | factor              { $$ = $1; }
       ;
-factor: NUM                 { asprintf(&$$, "pushi %d\n", $1); }
-      | VAR                 { asprintf(&$$, "pushg %d\n", get_addr($1)); }
+factor: NUM                 { asprintf(&$$, "\tpushi %d\n", $1); }
+      | VAR                 { asprintf(&$$, "\tpushg %d\n", get_addr($1)); }
       | '(' expr ')'        { $$ = $2; }
       ;
-cond: expr '>' expr         { asprintf(&$$, "%s%ssup\n", $1, $3); }
-    | expr '<' expr         { asprintf(&$$, "%s%sinf\n", $1, $3); }
-    | expr '>''=' expr      { asprintf(&$$, "%s%ssupeq\n", $1, $4); }
-    | expr '<''=' expr      { asprintf(&$$, "%s%sinfeq\n", $1, $4); }
-    | expr '!''=' expr      { asprintf(&$$, "%s%sequal\npushi 1\ninf\n", $1, $4); }
-    | expr '=''=' expr      { asprintf(&$$, "%s%sequal\n", $1, $4); }
+cond: expr '>' expr         { asprintf(&$$, "%s%s\tsup\n", $1, $3); }
+    | expr '<' expr         { asprintf(&$$, "%s%s\tinf\n", $1, $3); }
+    | expr '>''=' expr      { asprintf(&$$, "%s%s\tsupeq\n", $1, $4); }
+    | expr '<''=' expr      { asprintf(&$$, "%s%s\tinfeq\n", $1, $4); }
+    | expr '!''=' expr      { asprintf(&$$, "%s%s\tequal\npushi 1\ninf\n", $1, $4); }
+    | expr '=''=' expr      { asprintf(&$$, "%s%s\tequal\n", $1, $4); }
     ;
 %%
 
@@ -122,4 +120,15 @@ int get_addr(char * var) {
   }
 
   return 0;
+}
+
+/*  Create if clause given the condition, instructions inside the if clause and the
+    instructions after the if clause. */
+char * if_clause(char * cond, char * ifinsts, char * otherinsts) {
+  char * ifClause;
+  asprintf(&ifClause, "%sjz bloco%d\nbloco%d: \b%sbloco%d: \b%s", cond, block+1, block,
+    ifinsts, block+1, otherinsts);
+  block += 2;
+
+  return ifClause;
 }
