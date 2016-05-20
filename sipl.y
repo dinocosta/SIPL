@@ -7,6 +7,7 @@
   int yyerror(char *);
   void add_var(char *);
   int get_addr(char *);
+  int block;
 %}
 
 %union{
@@ -14,7 +15,7 @@
   int n;
 }
 
-%token Int RUN STOP wr rd
+%token Int RUN STOP wr rd IF
 %token <s> VAR STRING
 %token <n> NUM
 %type <s> intvars ints insts expr parcel factor cond
@@ -37,7 +38,10 @@ insts: wr '(' VAR ')'';' insts      { asprintf(&$$, "pushg %d\nwritei\n%s", get_
      | rd '(' VAR ')' ';' insts     { asprintf(&$$, "read\natoi\nstoreg %d\n%s", get_addr($3),
                                       $6); }
      | VAR '=' expr ';' insts       { asprintf(&$$, "%sstoreg %d\n%s", $3, get_addr($1), $5); }
-     | '(' cond ')' ';' insts       { asprintf(&$$, "%s%s", $2, $5); }
+     | '?' '(' cond ')' '{' insts '}' insts  {
+     asprintf(&$$, "%sjz bloco%d\nbloco%d: %sbloco%d: %s", $3, block+1, block, $6, block+1, $8);
+     block += 2;
+     }
      |                              { $$ = ""; }
      ;
 expr: parcel                { $$ = $1; }
@@ -77,6 +81,7 @@ int main() {
   // Initialize variables needed to store the variable addresses.
   addresses = g_hash_table_new(g_str_hash, g_str_equal);
   pointer   = 0;
+  block     = 0;
 
   yyparse();
 
