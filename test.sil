@@ -1,7 +1,11 @@
-Int a=1,b=2,c=3;
+Int a,b=20,c=10;
 RUN
-?(5 == 5) {
+rd(a);
+?(a > 2) {
   wr(a);
 }
-wr(b);
+?(a <= 2) {
+  wr(b);
+}
+wr(c);
 STOP
