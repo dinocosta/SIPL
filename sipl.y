@@ -15,7 +15,7 @@
   int n;
 }
 
-%token Int RUN STOP wr rd IF
+%token Int RUN STOP wr rd IF WHILE
 %token <s> VAR STRING
 %token <n> NUM
 %type <s> intvars ints insts expr parcel factor cond inst
@@ -38,8 +38,11 @@ inst: wr '(' VAR ')'';'             { asprintf(&$$, "\tpushg %d\n\twritei\n", ge
      | rd '(' VAR ')' ';'           { asprintf(&$$, "\tread\n\tatoi\n\tstoreg %d\n",
                                       get_addr($3)); }
      | VAR '=' expr ';'             { asprintf(&$$, "%s\tstoreg %d\n", $3, get_addr($1)); }
-     | '?''('cond')' '{' insts '}'  { asprintf(&$$, "%s\tjz label%d\n%slabel%d: \b", $3, label, $6, label);
-                                      label++; }
+     | '?''('cond')' '{' insts '}'  { asprintf(&$$, "%s\tjz label%d\n%slabel%d: \b", $3, label,
+                                      $6, label); label++; }
+     | '$''('cond')' '{' insts '}'
+     { asprintf(&$$, "label%d: %s\tjz label%d\n%sjump label%d\nlabel%d: ",
+       label, $3, label + 1, $6, label, label + 1); label += 2; }
      |                              { $$ = ""; }
      ;
 expr: parcel                { $$ = $1; }
