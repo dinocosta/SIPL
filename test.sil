@@ -1,11 +1,8 @@
 Int a,b=20,c=10;
 RUN
-rd(a);
-?(a > 2) {
-  wr(a);
+wr("Números pares de 0 até 10: ");
+$(a <= 10) {
+  ?((a % 2) == 0) { wr(a); wr(" "); }
+  a = a + 1;
 }
-?(a <= 2) {
-  wr(b);
-}
-wr(c);
 STOP

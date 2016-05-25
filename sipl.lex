@@ -28,13 +28,13 @@
 <READ>;               { BEGIN INSTRUCTIONS; return yytext[0]; }
 
 <INSTRUCTIONS>[A-Za-z]+ { BEGIN EXPR; yylval.s = strdup(yytext); return VAR; }
-<EXPR>[-+*/%()=]       { return yytext[0]; }
+<EXPR>[-+*/%()=]        { return yytext[0]; }
 <EXPR>[0-9]+            { yylval.n = atof(yytext); return NUM; }
 <EXPR>[A-Za-z]+         { yylval.s = strdup(yytext); return VAR; }
 <EXPR>;                 { BEGIN INSTRUCTIONS; return yytext[0]; }
 
 <INSTRUCTIONS>[?$]      { BEGIN COND; return yytext[0]; }
-<COND>[-+*/()=><!]      { return yytext[0]; }
+<COND>[-+*/%()=><!]     { return yytext[0]; }
 <COND>[0-9]+            { yylval.n = atof(yytext); return NUM; }
 <COND>[A-Za-z]+         { yylval.s = strdup(yytext); return VAR; }
 <COND>[{]               { BEGIN INSTRUCTIONS; return yytext[0]; }
