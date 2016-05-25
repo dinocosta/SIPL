@@ -40,7 +40,10 @@ inst: wr '(' VAR ')'';'             { asprintf(&$$, "\tpushg %d\n\twritei\n", ge
      | VAR '=' expr ';'             { asprintf(&$$, "%s\tstoreg %d\n", $3, get_addr($1)); }
      | '?''('cond')' '{' insts '}'  { asprintf(&$$, "%s\tjz label%d\n%slabel%d: \b", $3, label,
                                       $6, label); label++; }
-     | '$''('cond')' '{' insts '}'
+     | '?''('cond')''{' insts '}''_''{' insts '}'     /* IF ELSE */
+     { asprintf(&$$, "%s\tjz label%d\n%sjump label%d\nlabel%d: \b%slabel%d: \b",
+                $3, label, $6, label + 1, label, $10, label + 1); label++; }
+     | '$''('cond')' '{' insts '}'                    /* WHILE */
      { asprintf(&$$, "label%d: %s\tjz label%d\n%sjump label%d\nlabel%d: ",
        label, $3, label + 1, $6, label, label + 1); label += 2; }
      |                              { $$ = ""; }

@@ -41,7 +41,7 @@
 <COND>[ \t\n]*          { }
 
 
-<INSTRUCTIONS>[}]       { return yytext[0]; }
+<INSTRUCTIONS>[}_{]      { return yytext[0]; }
 
 <*>.|\n               { }
 %%
