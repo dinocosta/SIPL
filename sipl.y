@@ -38,11 +38,11 @@ inst: wr '(' VAR ')'';'             { asprintf(&$$, "\tpushg %d\n\twritei\n", ge
      | rd '(' VAR ')' ';'           { asprintf(&$$, "\tread\n\tatoi\n\tstoreg %d\n",
                                       get_addr($3)); }
      | VAR '=' expr ';'             { asprintf(&$$, "%s\tstoreg %d\n", $3, get_addr($1)); }
-     | '?''('cond')' '{' insts '}'  { asprintf(&$$, "%s\tjz label%d\n%slabel%d: \b", $3, label,
+     | '?''('cond')' '{' insts '}'  { asprintf(&$$, "%s\tjz label%d\n%slabel%d: ", $3, label,
                                       $6, label); label++; }
      | '?''('cond')''{' insts '}''_''{' insts '}'     /* IF ELSE */
-     { asprintf(&$$, "%s\tjz label%d\n%sjump label%d\nlabel%d: \b%slabel%d: \b",
-                $3, label, $6, label + 1, label, $10, label + 1); label++; }
+     { asprintf(&$$, "%s\tjz label%d\n%sjump label%d\nlabel%d: %slabel%d: ",
+                $3, label, $6, label + 1, label, $10, label + 1); label += 2; }
      | '$''('cond')' '{' insts '}'                    /* WHILE */
      { asprintf(&$$, "label%d: %s\tjz label%d\n%sjump label%d\nlabel%d: ",
        label, $3, label + 1, $6, label, label + 1); label += 2; }

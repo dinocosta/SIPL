@@ -43,5 +43,6 @@
 
 <INSTRUCTIONS>[}_{]      { return yytext[0]; }
 
+<*>#.*                { }
 <*>.|\n               { }
 %%
