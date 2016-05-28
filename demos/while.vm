@@ -1,0 +1,20 @@
+	pushi 0
+start
+label1: 	pushg 0
+	pushi 10
+	inf
+	jz label2
+	pushg 0
+	pushi 1
+	add
+	storeg 0
+	pushg 0
+	pushi 5
+	equal
+	jz label0
+	pushg 0
+	writei
+label0: jump label1
+label2: 	pushg 0
+	writei
+stop

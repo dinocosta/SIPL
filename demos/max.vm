@@ -1,0 +1,22 @@
+	pushi 0
+	pushi 0
+start
+	read
+	atoi
+	storeg 0
+	read
+	atoi
+	storeg 1
+	pushg 0
+	pushg 1
+	supeq
+	jz label0
+	pushg 0
+	writei
+label0: 	pushg 1
+	pushg 0
+	sup
+	jz label1
+	pushg 1
+	writei
+label1: stop

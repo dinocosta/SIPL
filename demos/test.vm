@@ -1,0 +1,26 @@
+	pushi 0
+	pushi 20
+	pushi 10
+start
+	pushs "Números pares de 0 até 10: "
+	writes
+label1: 	pushg 0
+	pushi 10
+	infeq
+	jz label2
+	pushg 0
+	pushi 2
+	mod
+	pushi 0
+	equal
+	jz label0
+	pushg 0
+	writei
+	pushs " "
+	writes
+label0: 	pushg 0
+	pushi 1
+	add
+	storeg 0
+jump label1
+label2: stop
