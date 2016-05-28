@@ -119,6 +119,7 @@ int main() {
 
 /*  Add a variable to the hashtable, saving its global address. */
 void add_var(char * var) {
+  char *error_message;
   // Check if variable does not exist.
   int * addr = (int *) g_hash_table_lookup(var_addresses, var);
   if (addr == NULL) {
@@ -127,12 +128,14 @@ void add_var(char * var) {
     pointer++;
   } else {
     // Stop execution if variable name is already in use.
-    yyerror("Variável já em utilização.");
+    asprintf(&error_message, "Variável '%s' já em utilização.", var);
+    yyerror(error_message);
   }
 }
 
 /*  Add an array to the hashtable, saving its global address. */
 void add_array(char * var, int size) {
+  char *error_message;
   // Check if variable does not exist.
   ArrayInfo *array = (ArrayInfo *) g_hash_table_lookup(array_addresses, var);
   if (array == NULL && size > 0) {
@@ -141,21 +144,28 @@ void add_array(char * var, int size) {
     g_hash_table_insert(array_addresses, var, array);
     pointer += size;
   }
-  else if (size < 0) {
-    // Stop execution if size is too small.
-    yyerror("Tamanho do Array demasiado baixo.");
-  }
   else {
-    // Stop execution if variable name is already in use.
-    yyerror("Variável já em utilização.");
+    if (size < 1) {
+      // Stop execution if size is too small.
+      asprintf(&error_message, "Tamanho do array '%s' demasiado baixo.", var);
+      yyerror(error_message);
+    }
+    if (array != NULL) {
+      // Stop execution if variable name is already in use.
+      asprintf(&error_message, "Variável '%s' já em utilização.", var);
+      yyerror(error_message);
+    }
   }
 }
 
 /*  Get the global address of a given variable name. */
 int get_addr(char * var) {
+  char *error_message;
   int * addr = (int *) g_hash_table_lookup(var_addresses, var);
-  if (addr == NULL) { // Variable does not exist.
-    yyerror("A variável não existe.");
+  if (addr == NULL) {
+    // Variable does not exist.
+    asprintf(&error_message, "Variável '%s' não inicializada.", var);
+    yyerror(error_message);
   } else {
     return *addr;
   }
