@@ -138,7 +138,7 @@ void add_array(char * var, int size) {
   if (array == NULL && size > 0) {
     array = (ArrayInfo *) malloc(sizeof(ArrayInfo));
     array->address = pointer;
-    g_hash_table_insert(var_addresses, var, array);
+    g_hash_table_insert(array_addresses, var, array);
     pointer += size;
   }
   else if (size < 0) {
