@@ -47,37 +47,41 @@ intvar: VAR                         { asprintf(&$$, "\tpushi 0\n"); add_var($1);
 insts: inst                         { $$ = $1; }
      | insts inst                   { asprintf(&$$, "%s%s", $1, $2); }
 
-inst: wr '(' VAR ')'';'             { asprintf(&$$, "\tpushg %d\n\twritei\n", get_var_addr($3));
-                                      }
-     | wr '(''"' STRING '"'')'';'   { asprintf(&$$, "\tpushs \"%s\"\n\twrites\n", $4); }
-     | rd '(' VAR ')' ';'           { asprintf(&$$, "\tread\n\tatoi\n\tstoreg %d\n",
-                                      get_var_addr($3)); }
-     | VAR '=' expr ';'             { asprintf(&$$, "%s\tstoreg %d\n", $3, get_var_addr($1)); }
-     | VAR '[' expr ']' '=' expr ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s%s\tstoren\n", get_array_addr($1), $3, $6); }
-     | '?''('cond')' '{' insts '}'  { asprintf(&$$, "%s\tjz label%d\n%slabel%d: ", $3, label,
-                                      $6, label); label++; }
-     | '?''('cond')''{' insts '}''_''{' insts '}'     /* IF ELSE */
-     { asprintf(&$$, "%s\tjz label%d\n%sjump label%d\nlabel%d: %slabel%d: ",
-                $3, label, $6, label + 1, label, $10, label + 1); label += 2; }
-     | '$''('cond')' '{' insts '}'                    /* WHILE */
-     { asprintf(&$$, "label%d: %s\tjz label%d\n%sjump label%d\nlabel%d: ",
-       label, $3, label + 1, $6, label, label + 1); label += 2; }
-     |                              { $$ = ""; }
-     ;
+inst: wr '(' factor ')' ';'         { asprintf(&$$, "%s\twritei\n", $3);}
+    | wr '(''"' STRING '"'')'';'    { asprintf(&$$, "\tpushs \"%s\"\n\twrites\n", $4); }
+    | rd '(' VAR ')' ';'            { asprintf(&$$, "\tread\n\tatoi\n\tstoreg %d\n",
+                                    get_var_addr($3)); }
+    | rd '(' VAR '[' expr ']' ')' ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tread\n\tatoi\n\tstoren\n", get_array_addr($3), $5); }
+    | VAR '=' expr ';'              { asprintf(&$$, "%s\tstoreg %d\n", $3, get_var_addr($1)); }
+    | VAR '[' expr ']' '=' expr ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s%s\tstoren\n", get_array_addr($1), $3, $6); }
+    | '?''('cond')' '{' insts '}'   { asprintf(&$$, "%s\tjz label%d\n%slabel%d: ", $3, label,
+                                    $6, label); label++; }
+    | '?''('cond')''{' insts '}''_''{' insts '}'     /* IF ELSE */
+    { asprintf(&$$, "%s\tjz label%d\n%sjump label%d\nlabel%d: %slabel%d: ",
+              $3, label, $6, label + 1, label, $10, label + 1); label += 2; }
+    | '$''('cond')' '{' insts '}'                    /* WHILE */
+    { asprintf(&$$, "label%d: %s\tjz label%d\n%sjump label%d\nlabel%d: ",
+     label, $3, label + 1, $6, label, label + 1); label += 2; }
+    |                              { $$ = ""; }
+    ;
+
 expr: parcel                { $$ = $1; }
     | expr '+' parcel       { asprintf(&$$, "%s%s\tadd\n", $1, $3); }
     | expr '-' parcel       { asprintf(&$$, "%s%s\tsub\n", $1, $3); }
     ;
+
 parcel: parcel '*' factor   { asprintf(&$$, "%s%s\tmul\n", $1, $3); }
       | parcel '/' factor   { asprintf(&$$, "%s%s\tdiv\n", $1, $3); }
       | parcel '%' factor   { asprintf(&$$, "%s%s\tmod\n", $1, $3); }
       | factor              { $$ = $1; }
       ;
+
 factor: NUM                 { asprintf(&$$, "\tpushi %d\n", $1); }
       | VAR                 { asprintf(&$$, "\tpushg %d\n", get_var_addr($1)); }
       | VAR '[' expr ']'    { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tloadn\n", get_array_addr($1), $3); }
       | '(' expr ')'        { $$ = $2; }
       ;
+
 cond: expr '>' expr         { asprintf(&$$, "%s%s\tsup\n", $1, $3); }
     | expr '<' expr         { asprintf(&$$, "%s%s\tinf\n", $1, $3); }
     | expr '>''=' expr      { asprintf(&$$, "%s%s\tsupeq\n", $1, $4); }

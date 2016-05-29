@@ -41,4 +41,10 @@ start
 	loadn
 	add
 	storen
+	pushgp
+	pushi 1
+	padd
+	pushi 4
+	loadn
+	writei
 stop

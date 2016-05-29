@@ -18,4 +18,4 @@ $(ODIR)/%.vm: $(IDIR)/%.sil
 
 clean:
 	rm -f y.tab.c lex.yy.c sipl
-	rm *.vm
+	rm -f demos/*.vm
