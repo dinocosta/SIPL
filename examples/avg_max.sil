@@ -1,0 +1,29 @@
+Int i, j, avg, max, matrix[2][2];
+
+RUN
+
+$(i < 2) {
+  j = 0;
+
+  $(j < 2) {
+    rd(matrix[i][j]);
+
+    avg = avg + matrix[i][j];
+    ?(matrix[i][j] > max) {
+      max = matrix[i][j];
+    }
+
+    j = j + 1;
+  }
+
+  i = i + 1;
+}
+  avg = avg / (i*j);
+  wr("Media e: ");
+  wr(avg);
+  wr("\n");
+  wr("Maximo e: ");
+  wr(max);
+  wr("\n");
+
+STOP

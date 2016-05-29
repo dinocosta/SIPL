@@ -6,15 +6,17 @@
   int yylex();
   int yyerror(char *);
   void add_var(char *);
-  void add_array(char *, int);
+  void add_array(char *, int, int);
   int get_var_addr(char *);
   int get_array_addr(char *);
+  int get_array_cols_length(char *);
 
   int label;
 
   typedef struct ArrayInfo {
     int address;
-    int size;
+    int rows;
+    int cols;
   } ArrayInfo;
 
 %}
@@ -42,7 +44,8 @@ intvars: intvar                     { $$ = $1; }
 
 intvar: VAR                         { asprintf(&$$, "\tpushi 0\n"); add_var($1); }
       | VAR '=' NUM                 { asprintf(&$$, "\tpushi %d\n", $3); add_var($1); }
-      | VAR '[' NUM ']'             { asprintf(&$$, "\tpushn %d\n", $3); add_array($1, $3);}
+      | VAR '[' NUM ']'             { asprintf(&$$, "\tpushn %d\n", $3); add_array($1, $3, 0);}
+      | VAR '[' NUM ']' '[' NUM ']' { asprintf(&$$, "\tpushn %d\n", $3 * $6); add_array($1, $3, $6);}
 
 insts: inst                         { $$ = $1; }
      | insts inst                   { asprintf(&$$, "%s%s", $1, $2); }
@@ -52,8 +55,10 @@ inst: wr '(' factor ')' ';'         { asprintf(&$$, "%s\twritei\n", $3);}
     | rd '(' VAR ')' ';'            { asprintf(&$$, "\tread\n\tatoi\n\tstoreg %d\n",
                                     get_var_addr($3)); }
     | rd '(' VAR '[' expr ']' ')' ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tread\n\tatoi\n\tstoren\n", get_array_addr($3), $5); }
+    | rd '(' VAR '[' expr ']' '[' expr ']' ')' ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tpushi %d\n\tmul\n%s\tadd\n\tread\n\tatoi\n\tstoren\n", get_array_addr($3), $5, get_array_cols_length($3), $8); }
     | VAR '=' expr ';'              { asprintf(&$$, "%s\tstoreg %d\n", $3, get_var_addr($1)); }
     | VAR '[' expr ']' '=' expr ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s%s\tstoren\n", get_array_addr($1), $3, $6); }
+    | VAR '[' expr ']' '[' expr ']' '=' expr ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tpushi %d\n\tmul\n%s\tadd\n%s\tstoren\n", get_array_addr($1), $3, get_array_cols_length($1), $6, $9); }
     | '?''('cond')' '{' insts '}'   { asprintf(&$$, "%s\tjz label%d\n%slabel%d: ", $3, label,
                                     $6, label); label++; }
     | '?''('cond')''{' insts '}''_''{' insts '}'     /* IF ELSE */
@@ -79,6 +84,7 @@ parcel: parcel '*' factor   { asprintf(&$$, "%s%s\tmul\n", $1, $3); }
 factor: NUM                 { asprintf(&$$, "\tpushi %d\n", $1); }
       | VAR                 { asprintf(&$$, "\tpushg %d\n", get_var_addr($1)); }
       | VAR '[' expr ']'    { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tloadn\n", get_array_addr($1), $3); }
+      | VAR '[' expr ']' '[' expr ']' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tpushi %d\n\tmul\n%s\tadd\n\tloadn\n", get_array_addr($1), $3, get_array_cols_length($1), $6); }
       | '(' expr ')'        { $$ = $2; }
       ;
 
@@ -143,20 +149,22 @@ void add_var(char * var) {
 }
 
 /*  Add an array to the hashtable, saving its global address. */
-void add_array(char * var, int size) {
+void add_array(char * var, int rows, int cols) {
   char *error_message;
   // Check if variable does not exist.
   int *addr = (int *) g_hash_table_lookup(var_addresses, var);
   ArrayInfo *array = (ArrayInfo *) g_hash_table_lookup(array_addresses, var);
-  if (array == NULL && addr == NULL && size > 0) {
+  if (array == NULL && addr == NULL && rows > 0) {
     array = (ArrayInfo *) malloc(sizeof(ArrayInfo));
     array->address = pointer;
+    array->rows = rows;
+    array->cols = cols;
     g_hash_table_insert(array_addresses, var, array);
-    pointer += size;
+    pointer += rows;
   }
   else {
-    if (size < 1) {
-      // Stop execution if size is too small.
+    if (rows < 1) {
+      // Stop execution if rows is too small.
       asprintf(&error_message, "Tamanho do array '%s' demasiado baixo.", var);
       yyerror(error_message);
     }
@@ -194,6 +202,21 @@ int get_array_addr(char * var) {
   }
   else {
     return array->address;
+  }
+
+  return 0;
+}
+
+int get_array_cols_length(char * var) {
+  char *error_message;
+  ArrayInfo *array = (ArrayInfo *) g_hash_table_lookup(array_addresses, var);
+  if (array == NULL) {
+    // Variable does not exist.
+    asprintf(&error_message, "Array '%s' não inicializado.", var);
+    yyerror(error_message);
+  }
+  else {
+    return array->cols;
   }
 
   return 0;
