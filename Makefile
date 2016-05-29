@@ -13,7 +13,7 @@ sipl: sipl.lex sipl.y
 
 demos: sipl.lex sipl.y $(DEMOS)
 
-$(ODIR)/%.vm: $(IDIR)/%.sil
+$(ODIR)/%.vm: $(IDIR)/%.sil sipl.lex sipl.y
 	./sipl < $< > $@
 
 clean:

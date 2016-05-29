@@ -75,12 +75,16 @@ label4: 	pushg 2
 	mul
 	div
 	storeg 2
-	pushs "Media e:"
+	pushs "Media e: "
 	writes
 	pushg 2
 	writei
-	pushs "Maximo e:"
+	pushs "\n"
+	writes
+	pushs "Maximo e: "
 	writes
 	pushg 3
 	writei
+	pushs "\n"
+	writes
 stop
