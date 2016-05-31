@@ -1,0 +1,17 @@
+Int b, d, e, f;
+RUN
+
+b = 3;
+d = 5;
+e = 1;
+f = 2;
+
+?((b >= e) & (e <= d)) { wr("True AND\n"); }
+?((b >= e) | (e <= d)) { wr("True OR1\n"); }
+?((b >= e) | (e > d)) { wr("True OR2\n"); }
+?((b <= e) & (e < = d)) { wr("False AND\n"); }
+?((b < e) | (e > d)) { wr("False OR\n"); }
+
+
+
+STOP

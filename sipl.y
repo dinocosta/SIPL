@@ -35,7 +35,7 @@
 %token Int RUN STOP wr rd f call
 %token <s> VAR STRING
 %token <n> NUM
-%type <s> intvars intvar ints insts expr parcel factor cond inst func funcs
+%type <s> intvars intvar ints insts expr parcel factor inst func funcs
 %type <ss> data
 
 %%
@@ -69,12 +69,12 @@ inst: wr '(' factor ')' ';'         { asprintf(&$$, "%s\twritei\n", $3);}
     | wr '(' '"' STRING '"' ')'';'  { asprintf(&$$, "\tpushs \"%s\"\n\twrites\n", $4); }
     | rd '(' data ')' ';'           { asprintf(&$$, "%s\tread\n\tatoi\n\%s", $3.begin, $3.end); }
     | data '=' expr ';'             { asprintf(&$$, "%s%s%s", $1.begin, $3, $1.end); }
-    | '?''('cond')' '{' insts '}'   { asprintf(&$$, "%s\tjz label%d\n%slabel%d: ", $3, label,
+    | '?''('expr')' '{' insts '}'   { asprintf(&$$, "%s\tjz label%d\n%slabel%d: ", $3, label,
                                     $6, label); label++; }
-    | '?''('cond')''{' insts '}''_''{' insts '}'     /* IF ELSE */
+    | '?''('expr')''{' insts '}''_''{' insts '}'     /* IF ELSE */
     { asprintf(&$$, "%s\tjz label%d\n%sjump label%d\nlabel%d: %slabel%d: ",
               $3, label, $6, label + 1, label, $10, label + 1); label += 2; }
-    | '$''('cond')' '{' insts '}'                    /* WHILE */
+    | '$''('expr')' '{' insts '}'                    /* WHILE */
     { asprintf(&$$, "label%d: %s\tjz label%d\n%sjump label%d\nlabel%d: ",
      label, $3, label + 1, $6, label, label + 1); label += 2; }
     | call STRING ';'              { asprintf(&$$, "\tpusha %s\n\tcall\n\tnop\n", $2); }
@@ -88,15 +88,23 @@ data: VAR                           { asprintf(&$$.begin, "");
     | VAR '[' expr ']' '[' expr ']' { asprintf(&$$.begin, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tpushi %d\n\tmul\n%s\tadd\n", get_array_addr($1), $3, get_array_cols_length($1), $6);
                                       asprintf(&$$.end, "\tstoren\n"); }
 
-expr: parcel                { $$ = $1; }
-    | expr '+' parcel       { asprintf(&$$, "%s%s\tadd\n", $1, $3); }
-    | expr '-' parcel       { asprintf(&$$, "%s%s\tsub\n", $1, $3); }
+expr: parcel                 { $$ = $1; }
+    | expr '+' parcel        { asprintf(&$$, "%s%s\tadd\n", $1, $3); }
+    | expr '-' parcel        { asprintf(&$$, "%s%s\tsub\n", $1, $3); }
     ;
 
-parcel: parcel '*' factor   { asprintf(&$$, "%s%s\tmul\n", $1, $3); }
-      | parcel '/' factor   { asprintf(&$$, "%s%s\tdiv\n", $1, $3); }
-      | parcel '%' factor   { asprintf(&$$, "%s%s\tmod\n", $1, $3); }
-      | factor              { $$ = $1; }
+parcel: parcel '*' factor    { asprintf(&$$, "%s%s\tmul\n", $1, $3); }
+      | parcel '/' factor    { asprintf(&$$, "%s%s\tdiv\n", $1, $3); }
+      | parcel '%' factor    { asprintf(&$$, "%s%s\tmod\n", $1, $3); }
+      | parcel '>' factor    { asprintf(&$$, "%s%s\tsup\n", $1, $3); }
+      | parcel '<' factor    { asprintf(&$$, "%s%s\tinf\n", $1, $3); }
+      | parcel '>''=' factor { asprintf(&$$, "%s%s\tsupeq\n", $1, $4); }
+      | parcel '<''=' factor { asprintf(&$$, "%s%s\tinfeq\n", $1, $4); }
+      | parcel '!''=' factor { asprintf(&$$, "%s%s\tequal\npushi 1\ninf\n", $1, $4); }
+      | parcel '=''=' factor { asprintf(&$$, "%s%s\tequal\n", $1, $4); }
+      | parcel '&' factor    { asprintf(&$$, "%s%s\tadd\n\tpushi 2\n\tequal\n", $1, $3); }
+      | parcel '|' factor    { asprintf(&$$, "%s%s\tadd\n\tpushi 0\n\tsup\n", $1, $3); }
+      | factor               { $$ = $1; }
       ;
 
 factor: NUM                 { asprintf(&$$, "\tpushi %d\n", $1); }
@@ -106,13 +114,6 @@ factor: NUM                 { asprintf(&$$, "\tpushi %d\n", $1); }
       | '(' expr ')'        { $$ = $2; }
       ;
 
-cond: expr '>' expr         { asprintf(&$$, "%s%s\tsup\n", $1, $3); }
-    | expr '<' expr         { asprintf(&$$, "%s%s\tinf\n", $1, $3); }
-    | expr '>''=' expr      { asprintf(&$$, "%s%s\tsupeq\n", $1, $4); }
-    | expr '<''=' expr      { asprintf(&$$, "%s%s\tinfeq\n", $1, $4); }
-    | expr '!''=' expr      { asprintf(&$$, "%s%s\tequal\npushi 1\ninf\n", $1, $4); }
-    | expr '=''=' expr      { asprintf(&$$, "%s%s\tequal\n", $1, $4); }
-    ;
 %%
 
 #include "lex.yy.c"
