@@ -1,7 +1,8 @@
 IDIR = examples
 ODIR = demos
 
-_DEMOS = avg_max.vm max.vm maxof3.vm while.vm array.vm test.vm func.vm logical.vm
+_DEMOS = avg_max.vm max.vm maxof3.vm while.vm array.vm test.vm func.vm \
+				 logical.vm order.vm
 DEMOS = $(patsubst %,$(ODIR)/%,$(_DEMOS))
 
 all: sipl demos

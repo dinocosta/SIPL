@@ -137,16 +137,6 @@ int main() {
 
   yyparse();
 
-  // Run through all the variables and print their var_addresses.
-  /*
-  GList * keys = g_hash_table_get_keys(var_addresses);
-  while (keys != NULL) {
-    int * addr = (int *) g_hash_table_lookup(var_addresses, keys->data);
-    printf("%s - %d\n", keys->data, *addr);
-    keys = keys->next;
-  }
-  */
-
   return 0;
 }
 

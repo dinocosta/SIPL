@@ -1,0 +1,103 @@
+	pushi 0
+	pushi 0
+	pushi 0
+	pushi 0
+	pushn 10
+	pushn 10
+jump inic
+maximum: nop
+	pushi 0
+	storeg 1
+	pushi 0
+	storeg 2
+label1: 	pushg 1
+	pushi 10
+	inf
+	jz label2
+	pushgp
+	pushi 4
+	padd
+	pushg 1
+	loadn
+	pushg 2
+	sup
+	jz label0
+	pushgp
+	pushi 4
+	padd
+	pushg 1
+	loadn
+	storeg 2
+	pushg 1
+	storeg 3
+label0: 	pushg 1
+	pushi 1
+	add
+	storeg 1
+jump label1
+label2: 	return
+start
+inic: label3: 	pushg 0
+	pushi 10
+	inf
+	jz label4
+	pushgp
+	pushi 4
+	padd
+	pushg 0
+	read
+	atoi
+	storen
+	pushg 0
+	pushi 1
+	add
+	storeg 0
+jump label3
+label4: 	pushi 0
+	storeg 0
+label5: 	pushg 0
+	pushi 10
+	inf
+	jz label6
+	pusha maximum
+	call
+	nop
+	pushgp
+	pushi 4
+	padd
+	pushg 3
+	pushi 0
+	storen
+	pushgp
+	pushi 14
+	padd
+	pushi 9
+	pushg 0
+	sub
+	pushg 2
+	storen
+	pushg 0
+	pushi 1
+	add
+	storeg 0
+jump label5
+label6: 	pushi 0
+	storeg 0
+label7: 	pushg 0
+	pushi 10
+	inf
+	jz label8
+	pushgp
+	pushi 14
+	padd
+	pushg 0
+	loadn
+	writei
+	pushs "\n"
+	writes
+	pushg 0
+	pushi 1
+	add
+	storeg 0
+jump label7
+label8: stop
