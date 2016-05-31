@@ -10,6 +10,10 @@
 <INTS>;                   { BEGIN INITIAL; return yytext[0]; }
 <INTS>[ \t\n]*            { }
 
+<INITIAL>f                { BEGIN FUNC; return f; }
+<FUNC>[A-Za-z]+           { yylval.s = strdup(yytext); return STRING; }
+<FUNC>[{]                 { BEGIN INSTRUCTIONS; return yytext[0]; }
+
 <INITIAL>RUN              { BEGIN INSTRUCTIONS; return RUN; }
 <INSTRUCTIONS>RUN         { return RUN; }
 <INSTRUCTIONS>STOP        { BEGIN INITIAL; return STOP; }

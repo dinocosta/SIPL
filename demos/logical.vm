@@ -2,8 +2,9 @@
 	pushi 0
 	pushi 0
 	pushi 0
+jump inic
 start
-	pushi 3
+inic: 	pushi 3
 	storeg 0
 	pushi 5
 	storeg 1
