@@ -35,7 +35,7 @@
 %token Int RUN STOP wr rd f call
 %token <s> VAR STRING
 %token <n> NUM
-%type <s> intvars intvar ints insts expr parcel factor cond inst fnc funcs
+%type <s> intvars intvar ints insts expr parcel factor cond inst func funcs
 %type <ss> data
 
 %%
@@ -54,12 +54,12 @@ intvar: VAR                         { asprintf(&$$, "\tpushi 0\n"); add_var($1);
       | VAR '[' NUM ']'             { asprintf(&$$, "\tpushn %d\n", $3); add_array($1, $3, 0);}
       | VAR '[' NUM ']' '[' NUM ']' { asprintf(&$$, "\tpushn %d\n", $3 * $6); add_array($1, $3, $6);}
 
-funcs: fnc                          { $$ = $1; }
-     | funcs fnc                    { asprintf(&$$, "%s%s", $1, $2); }
+funcs: func                         { $$ = $1; }
+     | funcs func                   { asprintf(&$$, "%s%s", $1, $2); }
      |                              { $$ = ""; }
      ;
 
-fnc: f STRING '{' insts '}'         { asprintf(&$$, "%s: nop\n%s\treturn\n", $2, $4); }
+func: f STRING '{' insts '}'        { asprintf(&$$, "%s: nop\n%s\treturn\n", $2, $4); }
    ;
 
 insts: inst                         { $$ = $1; }
