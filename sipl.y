@@ -19,17 +19,24 @@
     int cols;
   } ArrayInfo;
 
+  typedef struct WrapString {
+    char *begin;
+    char *end;
+  } WrapString;
+
 %}
 
 %union{
   char * s;
   int n;
+  WrapString ss;
 }
 
 %token Int RUN STOP wr rd f call
 %token <s> VAR STRING
 %token <n> NUM
 %type <s> intvars intvar ints insts expr parcel factor cond inst fnc funcs
+%type <ss> data
 
 %%
 siplp: ints funcs RUN insts STOP    { printf("%sjump inic\n%sstart\ninic: %sstop\n", $1, $2, $4); }
@@ -59,14 +66,9 @@ insts: inst                         { $$ = $1; }
      | insts inst                   { asprintf(&$$, "%s%s", $1, $2); }
 
 inst: wr '(' factor ')' ';'         { asprintf(&$$, "%s\twritei\n", $3);}
-    | wr '(''"' STRING '"'')'';'    { asprintf(&$$, "\tpushs \"%s\"\n\twrites\n", $4); }
-    | rd '(' VAR ')' ';'            { asprintf(&$$, "\tread\n\tatoi\n\tstoreg %d\n",
-                                    get_var_addr($3)); }
-    | rd '(' VAR '[' expr ']' ')' ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tread\n\tatoi\n\tstoren\n", get_array_addr($3), $5); }
-    | rd '(' VAR '[' expr ']' '[' expr ']' ')' ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tpushi %d\n\tmul\n%s\tadd\n\tread\n\tatoi\n\tstoren\n", get_array_addr($3), $5, get_array_cols_length($3), $8); }
-    | VAR '=' expr ';'              { asprintf(&$$, "%s\tstoreg %d\n", $3, get_var_addr($1)); }
-    | VAR '[' expr ']' '=' expr ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s%s\tstoren\n", get_array_addr($1), $3, $6); }
-    | VAR '[' expr ']' '[' expr ']' '=' expr ';' { asprintf(&$$, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tpushi %d\n\tmul\n%s\tadd\n%s\tstoren\n", get_array_addr($1), $3, get_array_cols_length($1), $6, $9); }
+    | wr '(' '"' STRING '"' ')'';'  { asprintf(&$$, "\tpushs \"%s\"\n\twrites\n", $4); }
+    | rd '(' data ')' ';'           { asprintf(&$$, "%s\tread\n\tatoi\n\%s", $3.begin, $3.end); }
+    | data '=' expr ';'             { asprintf(&$$, "%s%s%s", $1.begin, $3, $1.end); }
     | '?''('cond')' '{' insts '}'   { asprintf(&$$, "%s\tjz label%d\n%slabel%d: ", $3, label,
                                     $6, label); label++; }
     | '?''('cond')''{' insts '}''_''{' insts '}'     /* IF ELSE */
@@ -78,6 +80,13 @@ inst: wr '(' factor ')' ';'         { asprintf(&$$, "%s\twritei\n", $3);}
     | call STRING ';'              { asprintf(&$$, "\tpusha %s\n\tcall\n\tnop\n", $2); }
     |                              { $$ = ""; }
     ;
+
+data: VAR                           { asprintf(&$$.begin, "");
+                                      asprintf(&$$.end, "\tstoreg %d\n", get_var_addr($1)); }
+    | VAR '[' expr ']'              { asprintf(&$$.begin, "\tpushgp\n\tpushi %d\n\tpadd\n%s", get_array_addr($1), $3);
+                                      asprintf(&$$.end, "\tstoren\n"); }
+    | VAR '[' expr ']' '[' expr ']' { asprintf(&$$.begin, "\tpushgp\n\tpushi %d\n\tpadd\n%s\tpushi %d\n\tmul\n%s\tadd\n", get_array_addr($1), $3, get_array_cols_length($1), $6);
+                                      asprintf(&$$.end, "\tstoren\n"); }
 
 expr: parcel                { $$ = $1; }
     | expr '+' parcel       { asprintf(&$$, "%s%s\tadd\n", $1, $3); }
