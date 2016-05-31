@@ -1,0 +1,11 @@
+Int a, b;
+f max {
+  a = b;
+}
+RUN
+  a = 10;
+  b = 20;
+  call max;
+  wr(a);
+STOP
+

@@ -1,6 +1,7 @@
 	pushi 0
+jump inic
 start
-label1: 	pushg 0
+inic: label1: 	pushg 0
 	pushi 10
 	inf
 	jz label2

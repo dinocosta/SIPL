@@ -1,7 +1,8 @@
 	pushi 0
 	pushn 5
+jump inic
 start
-	pushi 35
+inic: 	pushi 35
 	storeg 0
 	pushgp
 	pushi 1

@@ -1,8 +1,9 @@
 	pushi 0
 	pushi 20
 	pushi 10
+jump inic
 start
-	pushs "Números pares de 0 até 10: "
+inic: 	pushs "Números pares de 0 até 10: "
 	writes
 label1: 	pushg 0
 	pushi 10

@@ -1,7 +1,8 @@
 	pushi 0
 	pushi 0
+jump inic
 start
-	read
+inic: 	read
 	atoi
 	storeg 0
 	read

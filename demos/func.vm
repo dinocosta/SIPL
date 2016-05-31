@@ -1,0 +1,18 @@
+	pushi 0
+	pushi 0
+jump inic
+max: nop
+	pushg 1
+	storeg 0
+	return
+start
+inic: 	pushi 10
+	storeg 0
+	pushi 20
+	storeg 1
+	pusha max
+	call
+	nop
+	pushg 0
+	writei
+stop

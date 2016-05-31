@@ -26,13 +26,13 @@
   int n;
 }
 
-%token Int RUN STOP wr rd IF WHILE
+%token Int RUN STOP wr rd f call
 %token <s> VAR STRING
 %token <n> NUM
-%type <s> intvars intvar ints insts expr parcel factor cond inst
+%type <s> intvars intvar ints insts expr parcel factor cond inst fnc funcs
 
 %%
-siplp: ints RUN insts STOP          { printf("%sstart\n%sstop\n", $1, $3); }
+siplp: ints funcs RUN insts STOP    { printf("%sjump inic\n%sstart\ninic: %sstop\n", $1, $2, $4); }
      ;
 
 ints: Int intvars ';'               { $$ = $2; }
@@ -46,6 +46,14 @@ intvar: VAR                         { asprintf(&$$, "\tpushi 0\n"); add_var($1);
       | VAR '=' NUM                 { asprintf(&$$, "\tpushi %d\n", $3); add_var($1); }
       | VAR '[' NUM ']'             { asprintf(&$$, "\tpushn %d\n", $3); add_array($1, $3, 0);}
       | VAR '[' NUM ']' '[' NUM ']' { asprintf(&$$, "\tpushn %d\n", $3 * $6); add_array($1, $3, $6);}
+
+funcs: fnc                          { $$ = $1; }
+     | funcs fnc                    { asprintf(&$$, "%s%s", $1, $2); }
+     |                              { $$ = ""; }
+     ;
+
+fnc: f STRING '{' insts '}'         { asprintf(&$$, "%s: nop\n%s\treturn\n", $2, $4); }
+   ;
 
 insts: inst                         { $$ = $1; }
      | insts inst                   { asprintf(&$$, "%s%s", $1, $2); }
@@ -67,6 +75,7 @@ inst: wr '(' factor ')' ';'         { asprintf(&$$, "%s\twritei\n", $3);}
     | '$''('cond')' '{' insts '}'                    /* WHILE */
     { asprintf(&$$, "label%d: %s\tjz label%d\n%sjump label%d\nlabel%d: ",
      label, $3, label + 1, $6, label, label + 1); label += 2; }
+    | call STRING ';'              { asprintf(&$$, "\tpusha %s\n\tcall\n\tnop\n", $2); }
     |                              { $$ = ""; }
     ;
 

@@ -3,8 +3,9 @@
 	pushi 0
 	pushi 0
 	pushn 4
+jump inic
 start
-label3: 	pushg 0
+inic: label3: 	pushg 0
 	pushi 2
 	inf
 	jz label4
@@ -75,12 +76,16 @@ label4: 	pushg 2
 	mul
 	div
 	storeg 2
-	pushs "Media e:"
+	pushs "Media e: "
 	writes
 	pushg 2
 	writei
-	pushs "Maximo e:"
+	pushs "\n"
+	writes
+	pushs "Maximo e: "
 	writes
 	pushg 3
 	writei
+	pushs "\n"
+	writes
 stop
