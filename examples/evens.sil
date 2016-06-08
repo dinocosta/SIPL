@@ -1,0 +1,21 @@
+Int i, n, num, evens;
+RUN
+
+wr("Quantos números quer?\n");
+rd(n);
+
+$(i < n) {
+  rd(num);
+  ?((num % 2) == 0) {
+    wr(num);
+    wr("\n");
+    evens = evens + 1;
+  }
+  i = i + 1;
+}
+
+wr("Há ");
+wr(evens);
+wr(" pares");
+
+STOP

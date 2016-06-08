@@ -1,0 +1,32 @@
+	pushi 0
+	pushi 0
+	pushi 0
+	pushi 0
+jump inic
+start
+inic: 	pushs "Quantos numeros quer somar?\n"
+	writes
+	read
+	atoi
+	storeg 0
+label0: 	pushg 1
+	pushg 0
+	inf
+	jz label1
+	read
+	atoi
+	storeg 3
+	pushg 2
+	pushg 3
+	add
+	storeg 2
+	pushg 1
+	pushi 1
+	add
+	storeg 1
+jump label0
+label1: 	pushs "Somatório:"
+	writes
+	pushg 2
+	writei
+stop

@@ -1,0 +1,16 @@
+Int n, i, sum, a;
+RUN
+
+wr("Quantos numeros quer somar?\n");
+rd(n);
+
+$(i<n) {
+  rd(a);
+  sum = sum + a;
+  i = i +1;
+}
+
+wr("Somatório:");
+wr(sum);
+
+STOP

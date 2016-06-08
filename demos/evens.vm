@@ -1,0 +1,42 @@
+	pushi 0
+	pushi 0
+	pushi 0
+	pushi 0
+jump inic
+start
+inic: 	pushs "Quantos números quer?"
+	writes
+	read
+	atoi
+	storeg 1
+label1: 	pushg 0
+	pushg 1
+	inf
+	jz label2
+	read
+	atoi
+	storeg 2
+	pushg 2
+	pushi 2
+	mod
+	pushi 0
+	equal
+	jz label0
+	pushg 2
+	writei
+	pushg 3
+	pushi 1
+	add
+	storeg 3
+label0: 	pushg 0
+	pushi 1
+	add
+	storeg 0
+jump label1
+label2: 	pushs "Há "
+	writes
+	pushg 3
+	writei
+	pushs " pares"
+	writes
+stop
